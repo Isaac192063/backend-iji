@@ -6,6 +6,7 @@ import com.jijy.music.persistence.repository.UserRepository;
 import com.jijy.music.presentation.dto.LoginRequest;
 import com.jijy.music.presentation.dto.ResponseAuth;
 import com.jijy.music.presentation.dto.UserDto;
+import com.jijy.music.services.exceptions.BadCredentials;
 import com.jijy.music.services.exceptions.BadRequestFailed;
 import com.jijy.music.services.exceptions.NotFoundException;
 import com.jijy.music.services.interfaces.AuthService;
@@ -13,6 +14,7 @@ import com.jijy.music.utils.JwtUtils;
 import com.jijy.music.utils.mappers.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -39,33 +41,51 @@ public class AuthServiceImp implements AuthService, UserDetailsService {
         UserDetails user = this.loadUserByUsername(loginRequest.email());
 
         if (!passwordEncoder.matches(loginRequest.password(), user.getPassword())) {
-            throw new BadRequestFailed("Password incorrect");
+            throw new BadCredentials("Password incorrect");
         }
 
-        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(user, loginRequest.password(), user.getAuthorities()));
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                user.getUsername(),
+                loginRequest.password(),
+                user.getAuthorities());
 
-        return new ResponseAuth(jwtUtils.generateJwtToken2(user));
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        return new ResponseAuth(jwtUtils.generateJwtToken(authentication));
     }
 
     @Override
     public ResponseAuth register(UserDto userDto) {
-        System.out.println(userRepository.existsByUsername(userDto.getUsername()));
         if (userRepository.existsByUsername(userDto.getUsername()) ||
                 userRepository.existsByEmail(userDto.getEmail())) {
             throw new BadRequestFailed("El usuario ya existe");
         }
 
-        if(userDto.getRole() == null) {
+        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+
+        if (userDto.getRole() == null) {
             userDto.setRole(ROLE.ROLE_USER);
+            authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
         }
 
         User user = UserMapper.INSTANCE.userDtoToUser(userDto);
         user.setPassword(passwordEncoder.encode(userDto.getPassword()));
         user.setCreatedAt(LocalDateTime.now());
-        userRepository.save(user);
+
+
+        User userSave = userRepository.save(user);
+
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                userSave.getId(),
+                userSave.getPassword(),
+                authorities);
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
 
         return new ResponseAuth(
-                jwtUtils.generateJwtToken(userDto)
+                jwtUtils.generateJwtToken(
+                        authentication
+                )
         );
     }
 
@@ -73,12 +93,12 @@ public class AuthServiceImp implements AuthService, UserDetailsService {
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         Optional<User> userEntity = userRepository.findByEmail(email);
         if (userEntity.isEmpty()) {
-            throw new NotFoundException("Usuario no encontrado");
+            throw new BadCredentials("Usuario no encontrado");
         }
 
         List<SimpleGrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority(userEntity.get().getRole().name()));
 
-        return new org.springframework.security.core.userdetails.User(email, userEntity.get().getPassword(), authorities);
+        return new org.springframework.security.core.userdetails.User(userEntity.get().getId(), userEntity.get().getPassword(), authorities);
     }
 }

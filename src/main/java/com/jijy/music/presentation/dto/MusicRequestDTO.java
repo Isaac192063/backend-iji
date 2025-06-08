@@ -12,5 +12,6 @@ public class MusicRequestDTO {
     private String artist;
     private String album;
     private String title;
+    private Double duration;
     private List<Genres> genres;
 }

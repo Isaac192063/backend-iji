@@ -18,5 +18,6 @@ public class MusicDto {
     private String url;
     private String artist;
     private String album;
+    private Double duration;
     private List<Genres> genres;
 }

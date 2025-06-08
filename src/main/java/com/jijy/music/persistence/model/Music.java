@@ -16,6 +16,8 @@ public class Music {
     private String title;
     private String artist;
     private String album;
+    private Double duration;
     @DBRef
     private List<Genres> genres;
+
 }

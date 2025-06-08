@@ -12,6 +12,9 @@ import com.jijy.music.services.interfaces.CloudinaryService;
 import com.jijy.music.services.interfaces.MusicService;
 import com.jijy.music.utils.mappers.MusicMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -26,10 +29,13 @@ public class MusicServiceImp implements MusicService {
     private final MusicRepository musicRepository;
     private final GenresRepository genresRepository;
     private final CloudinaryService cloudinaryService;
+    private final MongoTemplate mongoTemplate;
 
     @Override
     public MusicDto addMusic(MusicRequestDTO musicRequestDTO) throws IOException {
+        System.out.println(musicRequestDTO);
         Music music = MusicMapper.INSTANCE.requestMusicDTOToMusic(musicRequestDTO);
+        System.out.println(music);
         String url = "";
         if(!musicRequestDTO.getSong().isEmpty()){
             url = cloudinaryService.uploadSong(musicRequestDTO.getSong());
@@ -66,7 +72,22 @@ public class MusicServiceImp implements MusicService {
 
     @Override
     public List<MusicDto> getAllMusic() {
-        return musicRepository.findAll().stream().map(MusicMapper.INSTANCE::musicToMusicDto).toList();
+
+        Aggregation aggregation = Aggregation.newAggregation(
+                Aggregation.project("id", "url", "title", "artist", "album", "genres", "duration")
+                        .andExpression("toLower(title)").as("normalizedTitle"),
+                Aggregation.sort(Sort.Direction.DESC, "normalizedTitle")
+        );
+
+        List<Music> musicList = mongoTemplate.aggregate(
+                aggregation,
+                mongoTemplate.getCollectionName(Music.class),
+                Music.class
+        ).getMappedResults();
+
+
+        return musicList.stream().map(MusicMapper.INSTANCE::musicToMusicDto).toList();
+
     }
 
     @Override

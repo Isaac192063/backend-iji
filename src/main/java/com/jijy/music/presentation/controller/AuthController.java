@@ -1,5 +1,7 @@
 package com.jijy.music.presentation.controller;
 
+import com.jijy.music.configuration.security.oauth.CurrentUser;
+import com.jijy.music.configuration.security.oauth.UserPrincipal;
 import com.jijy.music.presentation.dto.LoginRequest;
 import com.jijy.music.presentation.dto.ResponseAuth;
 import com.jijy.music.presentation.dto.UserDto;
@@ -7,10 +9,7 @@ import com.jijy.music.services.interfaces.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("${path.auth}")
@@ -31,6 +30,13 @@ public class AuthController {
         return new ResponseEntity<>(
                 authService.register(userDto),
                 HttpStatus.CREATED);
+    }
+
+    @GetMapping("/profile")
+    public String googleLoginSuccess(@CurrentUser UserPrincipal oAuth2User) {
+        System.out.println(oAuth2User);
+        return "hola";
+//        return ResponseEntity.ok();
     }
 
 

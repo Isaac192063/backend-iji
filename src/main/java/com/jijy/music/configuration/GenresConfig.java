@@ -12,11 +12,11 @@ import java.util.List;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class GenresConfig implements CommandLineRunner {
+public class GenresConfig  {
 
     private final GenresRepository genresRepository;
 
-    @Override
+
     public void run(String... args) throws Exception {
         if(genresRepository.count() == 0) {
             List<Genres> genresList = List.of(
