@@ -58,6 +58,7 @@ public class SecurityConfig {
                     auth.requestMatchers(HttpMethod.GET,"/api/v1/music").permitAll();
                     auth.requestMatchers(HttpMethod.GET,"/api/v1/reproduction-list").permitAll();
 //                    auth.requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll();
+                    auth.requestMatchers("/chat/**").permitAll();
 
 
                     auth.requestMatchers(HttpMethod.GET, "/api/v1/user").hasRole("ADMIN");
@@ -98,7 +99,8 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedOrigin("http://localhost:5173/");
+        configuration.setAllowCredentials(true);
+        configuration.addAllowedOriginPattern("*");
         configuration.addAllowedHeader("*");
         configuration.addAllowedMethod("*");
 
