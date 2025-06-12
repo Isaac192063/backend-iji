@@ -76,7 +76,11 @@ public class ReproductionListServiceImp implements ReproductionListService {
 
         String idUsername = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
 
-        reproductionList.setAuthor(userService.getUserById(idUsername).getUsername());
+
+
+        UserDto userDto = userService.getUserById(idUsername);
+
+        reproductionList.setAuthor(userDto.getUsername());
         reproductionList.setNumSong(reproductionList.getNumSong() + 1);
         reproductionList.setScore(List.of());
         reproductionList.setCreationDate(LocalDateTime.now());

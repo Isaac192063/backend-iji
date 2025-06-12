@@ -38,8 +38,30 @@ public class CommunityServiceImp implements CommunityService {
 
     @Override
     public CommunityEntity updateCommunity(CommunityEntity community) {
-        return null;
+        System.out.println("Intentando actualizar comunidad con ID: " + community.getId());
+        Optional<CommunityEntity> existingOpt = communityRepository.findById(community.getId());
+
+        if (existingOpt.isEmpty()) {
+            System.out.println("No se encontró la comunidad.");
+            throw new NotFoundException("No se encontró la comunidad con ID: " + community.getId());
+        }
+
+        CommunityEntity existing = existingOpt.get();
+
+        // Actualizamos solo los campos que el usuario puede modificar
+        existing.setName(community.getName());
+        existing.setDescription(community.getDescription());
+        existing.setPrivateCommunity(community.isPrivateCommunity());
+        existing.setTags(community.getTags());
+        existing.setMaxMembers(community.getMaxMembers());
+        existing.setRules(community.getRules());
+
+
+        CommunityEntity saved = communityRepository.save(existing);
+        System.out.println("Comunidad actualizada: " + saved);
+        return saved;
     }
+
 
     @Override
     public void deleteCommunity(String id) {

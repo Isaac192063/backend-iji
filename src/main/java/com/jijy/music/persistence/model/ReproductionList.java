@@ -16,8 +16,8 @@ public class ReproductionList {
     private String id;
     private String title;
     private String description;
-    private String author;
     private LocalDateTime creationDate;
+    private String author;
     private int numSong;
     private List<ScoreModel> score = new ArrayList<>();
     private List<String> genres = new ArrayList<>();

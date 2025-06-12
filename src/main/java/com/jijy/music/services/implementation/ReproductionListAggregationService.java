@@ -1,6 +1,7 @@
 package com.jijy.music.services.implementation;
 
 
+import com.jijy.music.presentation.dto.AuthorPlaylistCount;
 import lombok.RequiredArgsConstructor;
 import org.bson.Document;
 import org.springframework.data.domain.Sort;
@@ -18,19 +19,14 @@ public class ReproductionListAggregationService {
     private final MongoTemplate mongoTemplate;
 
     // 1. Agrupar por autor y contar listas
-    public List<Document> countPlaylistsByAuthor() {
+    public List<AuthorPlaylistCount> countPlaylistsByAuthor() {
         Aggregation aggregation = Aggregation.newAggregation(
-                Aggregation.group("author").count().as("totalPlaylists")
+                Aggregation.group("author").count().as("totalPlaylists"),
+                Aggregation.project("totalPlaylists").and("_id").as("author"),
+                Aggregation.sort(Sort.by(Sort.Direction.DESC, "totalPlaylists", "author"))
         );
-        return mongoTemplate.aggregate(aggregation, "reproductionList", Document.class).getMappedResults();
-    }
 
-    // 2. Mostrar solo título y número de canciones
-    public List<Document> getTitlesAndSongCounts() {
-        Aggregation aggregation = Aggregation.newAggregation(
-                Aggregation.project("title", "numSong")
-        );
-        return mongoTemplate.aggregate(aggregation, "reproductionList", Document.class).getMappedResults();
+        return mongoTemplate.aggregate(aggregation, "reproductionList", AuthorPlaylistCount.class).getMappedResults();
     }
 
     // 3. Ordenar por cantidad de likes (likedBy.length)
@@ -44,9 +40,9 @@ public class ReproductionListAggregationService {
     }
 
     // 4. Filtrar listas que contengan el género "Rock"
-    public List<Document> filterByGenreRock() {
+    public List<Document> filterByGenreRock(String genre) {
         Aggregation aggregation = Aggregation.newAggregation(
-                Aggregation.match(Criteria.where("genres").in("Rock"))
+                Aggregation.match(Criteria.where("genres").in(genre))
         );
         return mongoTemplate.aggregate(aggregation, "reproductionList", Document.class).getMappedResults();
     }
@@ -54,8 +50,7 @@ public class ReproductionListAggregationService {
     // 5. Mostrar solo las 5 listas más populares (por likes)
     public List<Document> top5PopularLists() {
         Aggregation aggregation = Aggregation.newAggregation(
-                Aggregation.project("title", "likedBy")
-                        .and("likedBy").size().as("likeCount"),
+                Aggregation.project("title", "likedBy"),
                 Aggregation.sort(Sort.by(Sort.Direction.DESC, "likeCount")),
                 Aggregation.limit(5)
         );

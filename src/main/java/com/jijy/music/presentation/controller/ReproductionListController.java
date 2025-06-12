@@ -2,6 +2,7 @@ package com.jijy.music.presentation.controller;
 
 import com.jijy.music.persistence.model.Music;
 import com.jijy.music.persistence.model.ReproductionList;
+import com.jijy.music.presentation.dto.AuthorPlaylistCount;
 import com.jijy.music.presentation.dto.ScoreReproductionListDTO;
 import com.jijy.music.services.implementation.ReproductionListAggregationService;
 import com.jijy.music.services.interfaces.ReproductionListService;
@@ -17,10 +18,23 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ReproductionListController {
 
-
     private final ReproductionListService reproductionListService;
     private final ReproductionListAggregationService aggregationService;
 
+    @GetMapping("top-5-popular")
+    public ResponseEntity<List<Document>> top5PopularLists() {
+        return ResponseEntity.ok(aggregationService.top5PopularLists());
+    }
+
+    @GetMapping("count-by-author")
+    public ResponseEntity<List<AuthorPlaylistCount>> countByAuthor() {
+        return ResponseEntity.ok(aggregationService.countPlaylistsByAuthor());
+    }
+
+    @GetMapping("paginate")
+    public ResponseEntity<List<Document>> paginate(@RequestParam(defaultValue = "1") int page) {
+        return ResponseEntity.ok(aggregationService.paginateLists(page));
+    }
 
     @GetMapping("")
     public ResponseEntity<List<ReproductionList>> getAllLists() {
@@ -70,11 +84,6 @@ public class ReproductionListController {
     @PostMapping("{id}/score")
     public ResponseEntity<ReproductionList> toScore(@PathVariable String id, @RequestBody ScoreReproductionListDTO scoreReproductionListDTO) {
         return ResponseEntity.ok(reproductionListService.scoreToReproductionList(id, scoreReproductionListDTO));
-    }
-
-    @GetMapping("count-by-author")
-    public ResponseEntity<List<Document>> countByAuthor() {
-        return ResponseEntity.ok(aggregationService.countPlaylistsByAuthor());
     }
 
 }
