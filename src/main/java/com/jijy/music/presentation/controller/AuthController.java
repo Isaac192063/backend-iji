@@ -10,6 +10,7 @@ import com.jijy.music.presentation.dto.LoginRequest;
 import com.jijy.music.presentation.dto.ResponseAuth;
 import com.jijy.music.presentation.dto.UserDto;
 import com.jijy.music.services.interfaces.AuthService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -45,7 +46,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<ResponseAuth> registerUser(@RequestBody UserDto userDto) {
+    public ResponseEntity<ResponseAuth> registerUser(@Valid @RequestBody UserDto userDto) {
         return new ResponseEntity<>(
                 authService.register(userDto),
                 HttpStatus.CREATED);

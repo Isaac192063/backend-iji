@@ -50,7 +50,8 @@ dependencies {
 	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 	// dependencia de firebase
 	implementation 'com.google.firebase:firebase-admin:9.2.0'
-
+	// depencia jakarta
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
 }
 
 

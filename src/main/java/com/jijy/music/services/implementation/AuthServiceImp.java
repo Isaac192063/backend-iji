@@ -12,6 +12,7 @@ import com.jijy.music.services.exceptions.NotFoundException;
 import com.jijy.music.services.interfaces.AuthService;
 import com.jijy.music.utils.JwtUtils;
 import com.jijy.music.utils.mappers.UserMapper;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -62,7 +63,7 @@ public class AuthServiceImp implements AuthService, UserDetailsService {
     }
 
     @Override
-    public ResponseAuth register(UserDto userDto) {
+    public ResponseAuth register(@Valid UserDto userDto) {
         if (userRepository.existsByUsername(userDto.getUsername()) ||
                 userRepository.existsByEmail(userDto.getEmail())) {
             throw new BadRequestFailed("El usuario ya existe");

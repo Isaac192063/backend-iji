@@ -13,7 +13,9 @@ import java.util.List;
 @CrossOrigin(originPatterns = "http://localhost:5173/")
 public class GenresController {
 
+
     private final GenresService genresService;
+
 
     @GetMapping("")
     public List<GenresDto> getAllGenres() {

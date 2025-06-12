@@ -11,6 +11,7 @@ import com.jijy.music.services.exceptions.NotFoundException;
 import com.jijy.music.services.interfaces.CloudinaryService;
 import com.jijy.music.services.interfaces.MusicService;
 import com.jijy.music.utils.mappers.MusicMapper;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -55,7 +56,7 @@ public class MusicServiceImp implements MusicService {
     }
 
     @Override
-    public MusicDto updateMusic(String id, MusicDto music) {
+    public MusicDto updateMusic(@Valid String id, MusicDto music) {
         MusicDto musicDto = getMusicId(id);
 
         Music musicUpdate = MusicMapper.INSTANCE.musicDtoToMusic(musicDto);

@@ -4,6 +4,7 @@ import com.jijy.music.presentation.dto.GenresDto;
 import com.jijy.music.presentation.dto.MusicDto;
 import com.jijy.music.presentation.dto.MusicRequestDTO;
 import com.jijy.music.services.interfaces.MusicService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +23,7 @@ public class MusicController {
     private final MusicService musicService;
 
     @PostMapping()
-    public MusicDto addMusic(@ModelAttribute MusicRequestDTO musicRequestDTO) throws IOException {
+    public MusicDto addMusic(@Valid @ModelAttribute MusicRequestDTO musicRequestDTO) throws IOException {
         return musicService.addMusic(musicRequestDTO);
     }
 
@@ -32,7 +33,7 @@ public class MusicController {
     }
 
     @PutMapping("{id}")
-    public MusicDto getMusicById(@PathVariable String id, @RequestBody MusicDto musicDto) {
+    public MusicDto getMusicById(@PathVariable String id, @Valid @RequestBody MusicDto musicDto) {
         return musicService.updateMusic(id, musicDto);
     }
 
