@@ -51,7 +51,14 @@ public class AuthServiceImp implements AuthService, UserDetailsService {
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        return new ResponseAuth(jwtUtils.generateJwtToken(authentication));
+        // Obtener el rol del usuario para incluirlo en la respuesta
+        String role = user.getAuthorities().stream()
+                .filter(a -> a.getAuthority().startsWith("ROLE_"))
+                .map(a -> a.getAuthority())
+                .findFirst()
+                .orElse("ROLE_USER"); // Por defecto si no se encuentra un rol
+
+        return new ResponseAuth(jwtUtils.generateJwtToken(authentication), role);
     }
 
     @Override
@@ -66,6 +73,8 @@ public class AuthServiceImp implements AuthService, UserDetailsService {
         if (userDto.getRole() == null) {
             userDto.setRole(ROLE.ROLE_USER);
             authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+        } else {
+            authorities.add(new SimpleGrantedAuthority(userDto.getRole().name()));
         }
 
         User user = UserMapper.INSTANCE.userDtoToUser(userDto);
@@ -82,11 +91,7 @@ public class AuthServiceImp implements AuthService, UserDetailsService {
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        return new ResponseAuth(
-                jwtUtils.generateJwtToken(
-                        authentication
-                )
-        );
+        return new ResponseAuth(jwtUtils.generateJwtToken(authentication), userSave.getRole().name());
     }
 
     @Override
@@ -99,6 +104,41 @@ public class AuthServiceImp implements AuthService, UserDetailsService {
         List<SimpleGrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority(userEntity.get().getRole().name()));
 
+        // Asegúrate de que el primer parámetro sea el ID del usuario como String, no el email, si es lo que esperas
         return new org.springframework.security.core.userdetails.User(userEntity.get().getId(), userEntity.get().getPassword(), authorities);
     }
+
+    @Override
+    public ResponseAuth loginWithFirebase(String uid, String email) {
+        Optional<User> userOptional = userRepository.findByEmail(email);
+        User user;
+
+        if (userOptional.isEmpty()) {
+            // Si el usuario no existe, regístralo
+            User newUser = new User();
+            newUser.setEmail(email);
+            newUser.setUsername(uid); // O podrías generar un username a partir del email o pedirlo en el frontend
+            newUser.setPassword(passwordEncoder.encode("firebase-auth-password")); // Contraseña dummy o generada, no se usará para login normal
+            newUser.setRole(ROLE.ROLE_USER); // Asigna un rol por defecto
+            newUser.setCreatedAt(LocalDateTime.now());
+            user = userRepository.save(newUser);
+        } else {
+            user = userOptional.get();
+        }
+
+        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(new SimpleGrantedAuthority(user.getRole().name()));
+
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                user.getId(), // Usamos el ID del usuario de nuestra BD
+                null, // No hay contraseña para esta autenticación
+                authorities
+        );
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        String token = jwtUtils.generateJwtToken(authentication);
+        return new ResponseAuth(token, user.getRole().name());
+    }
+
 }

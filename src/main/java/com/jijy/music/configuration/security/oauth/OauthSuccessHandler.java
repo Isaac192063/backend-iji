@@ -6,7 +6,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.jijy.music.persistence.model.ROLE;
 import com.jijy.music.persistence.model.User;
 import com.jijy.music.persistence.repository.UserRepository;
-import com.jijy.music.presentation.dto.ResponseAuth;
+import com.jijy.music.presentation.dto.ResponseAuth; // Asegúrate de que este import es correcto
 import com.jijy.music.presentation.dto.UserDto;
 import com.jijy.music.services.exceptions.NotFoundException;
 import com.jijy.music.services.interfaces.UserService;
@@ -40,6 +40,8 @@ public class OauthSuccessHandler implements AuthenticationSuccessHandler {
     private final UserRepository userService;
     private final UserRepository userRepository;
 
+    // Aunque ObjectMapper está aquí, el error no tiene que ver con su uso directo en las líneas afectadas
+    // Pero si no lo usas, considera quitarlo para limpiar el código (advertencia de "unused field").
     private final ObjectMapper objectMapper;
 
     public void onAuthenticationSuccess(HttpServletRequest request,
@@ -58,36 +60,41 @@ public class OauthSuccessHandler implements AuthenticationSuccessHandler {
             System.out.println(userIfExist.get().getId());
             String token = this.login(userIfExist.get().getId(), userIfExist.get().getRole());
 
-            response.sendRedirect("http://localhost:5173/oauth2/redirect?token="+token);
+            // Aquí ya tienes el rol del usuario existente.
+            String role = userIfExist.get().getRole().name(); // Obtén el nombre del enum ROLE
+
+            // Redirige pasando el token y el rol
+            response.sendRedirect("http://localhost:5173/oauth2/redirect?token=" + token + "&role=" + role);
             return;
         }
-
 
         String name = authToken.getPrincipal().getAttributes().get("name").toString();
         String givenName = authToken.getPrincipal().getAttributes().get("given_name").toString().trim();
         String username = givenName + Math.round(Math.random() * 100 + 1);
 
-
         User user = User.builder()
                 .email(email)
                 .name(name)
                 .username(username)
-                .role(ROLE.ROLE_USER)
+                .role(ROLE.ROLE_USER) // Para un nuevo registro con OAuth, el rol inicial suele ser USER
                 .createdAt(LocalDateTime.now())
                 .build();
 
         User userSave = userRepository.save(user);
 
+        // Generamos el token después de guardar al nuevo usuario
+        String tokenForNewUser = login(userSave.getId(), userSave.getRole());
+        String roleForNewUser = userSave.getRole().name(); // Obtén el nombre del enum ROLE
 
-        ResponseAuth responseAuth = new ResponseAuth(
-                login(userSave.getId(), userSave.getRole())
-        );
+        // Construimos el ResponseAuth (aunque no lo vamos a usar directamente para la redirección,
+        // lo dejo para mostrar cómo lo crearías si lo serializaras en el futuro, por ejemplo)
+        // ResponseAuth responseAuth = new ResponseAuth(tokenForNewUser, roleForNewUser);
 
-        response.sendRedirect("http://localhost:5173/oauth2/redirect?token="+responseAuth.token());
+        // Redirige pasando el token y el rol
+        response.sendRedirect("http://localhost:5173/oauth2/redirect?token=" + tokenForNewUser + "&role=" + roleForNewUser);
     }
 
     private String login(String id, ROLE role) {
-
         List<SimpleGrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority(role.toString()));
 
@@ -95,5 +102,4 @@ public class OauthSuccessHandler implements AuthenticationSuccessHandler {
 
         return jwtUtils.generateJwtToken(userDetails);
     }
-
 }
